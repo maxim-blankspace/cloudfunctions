@@ -20,11 +20,17 @@ exports.handleOrderProcessed = functions.https.onRequest(async (req, res) => {
             .doc(userID);
 
         let docRef = await userSettings.get();
+
+        //sending notification
         if (docRef.exists) {
             const docData = docRef.data();
+
             // android specific headers
             const android = {
                 collapseKey: "uae_feedback",
+                notification: {
+                    channelId: "default-channel-id",
+                },
             };
 
             // ios specific headers
@@ -33,15 +39,15 @@ exports.handleOrderProcessed = functions.https.onRequest(async (req, res) => {
                     "apns-collapse-id": "uae_feedback",
                 },
             };
-            // const result =
-            await admin.messaging().sendToDevice(docData.fcmToken, {
+
+            await admin.messaging().send({
+                token: docData.fcmToken,
                 android,
                 apns,
                 data: {
                     type: "post-order",
                 },
                 notification: {
-                    tag: "uae_feedback",
                     body: POST_ORDER_NOTIFCATION[docData.language],
                 },
             });
